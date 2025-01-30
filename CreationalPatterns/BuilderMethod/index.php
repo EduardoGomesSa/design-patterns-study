@@ -12,7 +12,7 @@ interface SQLQueryBuilder {
     public function getSQL() : string;
 }
 
-class MysqlBuilder implements SQLQueryBuilder {
+class MysqlQueryBuilder implements SQLQueryBuilder {
     protected $query;
 
     protected function reset() : void {
@@ -60,5 +60,16 @@ class MysqlBuilder implements SQLQueryBuilder {
 
         $sql .= ';';
         return $sql;
+    }
+}
+
+class PostgresQueryBuilder extends MysqlQueryBuilder {
+    public function limit(int $start, int $offset): SQLQueryBuilder
+    {
+        parent::limit($start, $offset);
+
+        $this->query->limit = " LIMIT " . $start . " OFFSET " . $offset;
+
+        return $this;
     }
 }
