@@ -87,3 +87,40 @@ abstract class FieldComposite extends FormElement {
     }
 } 
 
+class Fieldset extends FieldComposite {
+    public function render(): string
+    {
+        $output = parent::render();
+
+        return "<fieldset><legend>{$this->title}</legend>\n$output</fieldset>\n";
+    }
+}
+
+class Form extends FieldComposite {
+    protected $url;
+
+    public function __construct(string $name, string $title, string $url) {
+        parent::__construct($name, $title);
+        $this->url = $url;
+    }
+
+    public function render(): string
+    {
+        $output = parent::render();
+        return "<form action=\"{$this->url}\">\n<h3>{$this->title}</h3>\n$output</form>\n";
+    }
+}
+
+function getProductForm() : FormElement {
+    $form = new Form("product", "Add product", "/product/add");
+    $form->add(new Input('name', "Name", 'text'));
+    $form->add(new Input('description', "Description", 'text'));
+
+    $picture = new Fieldset('photo', "Product photo");
+    $picture->add(new Input('caption', "Caption", 'text'));
+    $picture->add(new Input('image', "Image", 'file'));
+    $form->add($picture);
+
+    return $form;
+}
+
