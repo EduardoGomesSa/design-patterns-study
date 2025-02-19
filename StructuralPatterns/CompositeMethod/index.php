@@ -50,7 +50,7 @@ abstract class FieldComposite extends FormElement {
 
     public function add(FormElement $field) : void {
         $name = $field->getName();
-        $this->fields[$name] = $name;
+        $this->fields[$name] = $field;
     }
 
     public function remove(FormElement $component) : void {
@@ -59,7 +59,7 @@ abstract class FieldComposite extends FormElement {
         });
     }
 
-    public function setData($data) : void{
+    public function setData($data) : void {
         foreach($this->fields as $name => $field) {
             if(isset($data[$name])){
                 $field->setData($data[$name]);
@@ -124,3 +124,23 @@ function getProductForm() : FormElement {
     return $form;
 }
 
+function loadProductData(FormElement $form) {
+    $data = [
+        'name' => 'Apple MacBook',
+        'description' => 'A decent laptop.',
+        'photo' => [
+            'caption' => 'Front photo.',
+            'image' => 'photo1.png',
+        ],
+    ];
+
+    $form->setData($data);
+}
+
+function renderProduct(FormElement $form) {
+    echo $form->render();
+}
+
+$form = getProductForm();
+loadProductData($form);
+renderProduct($form);
