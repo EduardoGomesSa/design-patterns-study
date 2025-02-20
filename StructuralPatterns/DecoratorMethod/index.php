@@ -61,3 +61,77 @@ class DangerousHTMLTagsFilter extends TextFormat {
         return $text;
     }
 }
+
+class MarkdownFormat extends TextFormat {
+    public function formatText(string $text): string
+    {
+        $text = parent::formatText($text);
+
+        $chunks = preg_split('|\n\n|', $text);
+
+        foreach($chunks as &$chunk) {
+            if(preg_match('|^#+|', $chunk)){
+                $chunk = preg_replace_callback('|^(#+)(.*?)$|', function ($matches) {
+                    $h = strlen($matches[1]);
+                    return "<h$h>" . trim($matches[2]) . "</h$h>";
+                }, $chunk);
+            } else {
+                $chunk = "<p>$chunk</p>";
+            }
+        }
+
+        $text = implode("/n/n", $chunks);
+
+        $text = preg_replace("|__(.*?)__|", '<strong>$1</strong>', $text);
+        $text = preg_replace("|\*\*(.*?)\*\*|", '<strong>$1</strong>', $text);
+        $text = preg_replace("|_(.*?)_|", '<em>$1</em>', $text);
+        $text = preg_replace("|\*(.*?)\*|", '<em>$1</em>', $text);
+
+        return $text;
+    }
+}
+
+function displayCommentAsAWebsite(InputFormat $format, string $text) {
+    echo $format->formatText($text);
+}
+
+$dangerousComment = <<<HERE
+Hello! Nice blog post!
+Please visit my <a href='http://www.iwillhackyou.com'>homepage</a>.
+<script src="http://www.iwillhackyou.com/script.js">
+  performXSSAttack();
+</script>
+HERE;
+
+$naiveInput = new TextInput();
+echo "Website renders comments without filtering (unsafe):\n";
+displayCommentAsAWebsite($naiveInput,$dangerousComment);
+echo "\n\n\n";
+
+$filteredInput = new PlainTextFilter($naiveInput);
+echo "Website renders comments after stripping all tags (safe):\n";
+displayCommentAsAWebsite($filteredInput, $dangerousComment);
+echo "\n\n\n";
+
+$dangerousForumPost = <<<HERE
+# Welcome
+
+This is my first post on this **gorgeous** forum.
+
+<script src="http://www.iwillhackyou.com/script.js">
+  performXSSAttack();
+</script>
+HERE;
+
+$naiveInput = new TextInput();
+echo "Website renders a forum post without filtering and formatting (unsafe, ugly):\n";
+displayCommentAsAWebsite($naiveInput, $dangerousForumPost);
+echo "\n\n\n";
+
+$text = new TextInput();
+$markdown = new MarkdownFormat($text);
+$filteredInput = new DangerousHTMLTagsFilter($markdown);
+echo "Website renders a forum post after translating markdown markup" .
+    " and filtering some dangerous HTML tags and attributes (safe, pretty):\n";
+displayCommentAsAWebsite($filteredInput, $dangerousForumPost);
+echo "\n\n\n";
