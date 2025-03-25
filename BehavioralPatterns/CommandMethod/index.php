@@ -51,3 +51,59 @@ abstract class WebScrapingCommand implements Command {
         Queue::get()->completeCommand($this);
     }
 }
+
+class IMDBGenresScrapingCommand extends WebScrapingCommand {
+    public function __construct() {
+        $this->url = "https://www.imdb.com/feature/genre/";
+    }
+
+    public function parse(string $html): void
+    {
+        preg_match_all("|href=\"(https://www.imdb.com/search/title\?genres=.*?)\"|", $html, $matches);
+
+        echo "IMDBGenresScrapingCommand: Discovered " . count($matches[1]) . " genres.\n";
+
+        foreach ($matches[1] as $genre) {
+            Queue::get()->add(new IMDBGenrePageScrapingCommand($genre));
+        }
+    }
+}
+
+class IMDBGenrePageScrapingCommand extends WebScrapingCommand {
+    private $page;
+
+    public function __construct(string $url, int $page = 1) {
+        parent::__construct($url);
+        $this->page = $page;
+    }
+
+    public function getURL(): string
+    {
+        return $this->url . '?page=' . $this->page;
+    }
+
+    public function parse(string $html) : void {
+        preg_match_all("|href=\"(/title/.*?/)\?ref_=adv_li_tt\"|", $html, $matches);
+        echo "IMDBGenrePageScrapingCommand: Discovered " . count($matches[1]) . " movies.\n";
+
+        foreach ($matches[1] as $moviePath) {
+            $url = "https://www.imdb.com" . $moviePath;
+            Queue::get()->add(new IMDBMovieScrapingCommand($url));
+        }
+
+        if(preg_match("|Next &#187;</a>|", $html)) {
+            Queue::get()->add(new IMDBGenrePageScrapingCommand($this->url, $this->page + 1));
+        }
+    }
+}
+
+class IMDBMovieScrapingCommand extends WebScrapingCommand {
+    public function parse(string $html): void
+    {
+        if(preg_match("|<h1 itemprop=\"name\" class=\"\">(.*?)</h1>|", $html, $matches)) {
+            $title = $matches[1];
+        }
+        
+        echo "IMDBMovieScrapingCommand: Parsed movie $title.\n";
+    }
+}
