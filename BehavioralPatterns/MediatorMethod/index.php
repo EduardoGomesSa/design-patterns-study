@@ -51,3 +51,14 @@ class EventDispatcher
         }
     }
 }
+
+
+function events() : EventDispatcher {
+    static $eventDispatcher;
+
+    if(!$eventDispatcher) {
+        $eventDispatcher = new EventDispatcher();
+    }
+
+    return $eventDispatcher;
+}
