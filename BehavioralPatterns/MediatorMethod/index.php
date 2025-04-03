@@ -149,27 +149,32 @@ class UserRepository implements Observer
     }
 }
 
-class User {
+class User
+{
     public $attributes = [];
 
-    public function update($data) : void {
+    public function update($data): void
+    {
         $this->attributes = array_merge($this->attributes, $data);
     }
 
-    public function delete() : void {
+    public function delete(): void
+    {
         echo "User: I can now delete myself without worrying about the repository.\n";
         events()->trigger("users:deleted", $this, $this);
     }
 }
 
-class Logger implements Observer {
+class Logger implements Observer
+{
     private $filename;
 
-    public function __construct($filename) {
+    public function __construct($filename)
+    {
         $this->filename = $filename;
-        if(file_exists($this->filename)) {
+        if (file_exists($this->filename)) {
             unlink($this->filename);
-        } 
+        }
     }
 
     public function update(string $event, object $emitter, $data = null)
@@ -180,3 +185,38 @@ class Logger implements Observer {
         echo "Logger: I've written '$event' entry to the log.\n";
     }
 }
+
+class OnboardingNotification implements Observer
+{
+    private $adminEmail;
+
+    public function __construct(string $adminEmail)
+    {
+        $this->adminEmail = $adminEmail;
+    }
+
+    public function update(string $event, object $emitter, $data = null)
+    {
+        echo "OnboardingNotification: The notification has been emailed!\n";
+    }
+}
+
+
+$repository = new UserRepository();
+events()->attach($repository, "facebook:update");
+
+
+$logger = new Logger(__DIR__ . "/log.txt");
+events()->attach($logger, "*");
+
+$onboarding = new OnboardingNotification("1@example.com");
+events()->attach($onboarding, "users:created");
+
+$repository->initialize(__DIR__ . "users.csv");
+
+$user = $repository->createUser([
+    'name' => 'Eduardo',
+    'email' => 'eduardo@gmail.com'
+]);
+
+$user->delete();
