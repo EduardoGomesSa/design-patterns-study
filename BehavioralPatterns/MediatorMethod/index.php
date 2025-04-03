@@ -113,7 +113,7 @@ class UserRepository implements Observer
         return $user;
     }
 
-    public function updateUser(User $user, array $data, bool $silent = false): User
+    public function updateUser(User $user, array $data, bool $silent = false): ?User
     {
         echo "UserRepository: Updating a user.\n";
 
@@ -146,5 +146,18 @@ class UserRepository implements Observer
         if (!$silent) {
             events()->trigger("users:deleted", $this, $user);
         }
+    }
+}
+
+class User {
+    public $attributes = [];
+
+    public function update($data) : void {
+        $this->attributes = array_merge($this->attributes, $data);
+    }
+
+    public function delete() : void {
+        echo "User: I can now delete myself without worrying about the repository.\n";
+        events()->trigger("users:deleted", $this, $this);
     }
 }
