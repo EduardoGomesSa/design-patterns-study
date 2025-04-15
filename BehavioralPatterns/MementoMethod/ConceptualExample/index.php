@@ -42,3 +42,8 @@ class Originator
         echo "Originator: My state has changed to: {$this->state}\n";
     }
 }
+
+interface Memento {
+    public function getName() : string;
+    public function getDate() : string;
+}
