@@ -33,31 +33,37 @@ class Originator
         );
     }
 
-    public function save() : Memento {
+    public function save(): Memento
+    {
         return new ConcreteMemento($this->state);
     }
 
-    public function restore(Memento $memento) : void {
+    public function restore(Memento $memento): void
+    {
         $this->state = $memento->getState();
         echo "Originator: My state has changed to: {$this->state}\n";
     }
 }
 
-interface Memento {
-    public function getName() : string;
-    public function getDate() : string;
+interface Memento
+{
+    public function getName(): string;
+    public function getDate(): string;
 }
 
-class ConcreteMemento implements Memento {
+class ConcreteMemento implements Memento
+{
     private $state;
     private $date;
 
-    public function __construct(string $state) {
+    public function __construct(string $state)
+    {
         $this->state = $state;
         $this->date = date('Y-m-d H:i:s');
     }
 
-    public function getState() : string {
+    public function getState(): string
+    {
         return $this->state;
     }
 
@@ -71,3 +77,66 @@ class ConcreteMemento implements Memento {
         return $this->date;
     }
 }
+
+class Caretaker
+{
+    private $mementos = [];
+    private $originator;
+
+    public function __construct(Originator $originator)
+    {
+        $this->originator = $originator;
+    }
+
+    public function backup(): void
+    {
+        echo "\nCaretaker: Saving Originator's state...\n";
+        $this->mementos[] = $this->originator->save();
+    }
+
+    public function undo(): void
+    {
+        if (!count($this->mementos)) {
+            return;
+        }
+
+        $memento = array_pop($this->mementos);
+
+        echo "Caretaker: Restoring state to: " . $memento->getName() . "\n";
+        try {
+            $this->originator->restore($memento);
+        } catch (\Exception $e) {
+            $this->undo();
+        }
+    }
+
+    public function showHistory(): void
+    {
+        echo "Caretaker: Here's the list of mementos:\n";
+        foreach ($this->mementos as $memento) {
+            echo $memento->getName() . "\n";
+        }
+    }
+}
+
+
+$originator = new Originator("Super-duper-super-puper-super.");
+$caretaker = new Caretaker($originator);
+
+$caretaker->backup();
+$originator->doSomething();
+
+$caretaker->backup();
+$originator->doSomething();
+
+$caretaker->backup();
+$originator->doSomething();
+
+echo "\n";
+$caretaker->showHistory();
+
+echo "\nClient: Now let's rollback!\n\n";
+$caretaker->undo();
+
+echo "\nClient> Once more!\n\n";
+$caretaker->undo();
