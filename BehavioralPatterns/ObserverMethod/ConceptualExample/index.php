@@ -3,6 +3,7 @@
 namespace RefactoringGuru\Observer\Conceptual;
 
 use SplObserver;
+use SplSubject;
 
 class Subject implements \SplSubject
 {
@@ -43,3 +44,39 @@ class Subject implements \SplSubject
         $this->notify();
     }
 }
+
+class ConcreteObserverA implements \SplObserver
+{
+    public function update(SplSubject $subject): void
+    {
+        if ($subject->state < 3) {
+            echo "ConcreteObserverA: Reacted to the event.\n";
+        }
+    }
+}
+
+class ConcreteObserverB implements \SplObserver
+{
+    public function update(SplSubject $subject): void
+    {
+        if ($subject->state == 0 || $subject->state >= 2) {
+            echo "ConcreteObserverB: Reacted to the event.\n";
+        }
+    }
+}
+
+
+$subject = new Subject();
+
+$o1 = new ConcreteObserverA();
+$subject->attach($o1);
+
+$o2 = new ConcreteObserverB();
+$subject->attach($o2);
+
+$subject->someBusinessLogic();
+$subject->someBusinessLogic();
+
+$subject->detach($o2);
+
+$subject->someBusinessLogic();
