@@ -127,7 +127,7 @@ class Logger implements \SplObserver {
         }
     }
 
-    public function update(\SplSubject $subject, ?string $event = null, $data): void
+    public function update(\SplSubject $subject, ?string $event = null, $data = null): void
     {
         $entry = date("Y-m-d H:i:s") . ": '$event' with data '" . json_encode($data) . "'\n";
         file_put_contents($this->filename, $entry, FILE_APPEND);
@@ -135,3 +135,29 @@ class Logger implements \SplObserver {
         echo "Logger: I've written '$event' entry to the log.\n";
     }
 }
+
+class OnboardingNotification implements \SplObserver {
+    private $adminEmail;
+
+    public function __construct($adminEmail) {
+        $this->adminEmail = $adminEmail;
+    }
+
+    public function update(SplSubject $subject, ?string $event = null, $data = null): void
+    {
+        echo "OnBoardingNotification: The notification has been emailed!\n";
+    }
+}
+
+$repository = new UserRepository();
+$repository->attach(new Logger(__DIR__ . "/log.txt"), "*");
+$repository->attach(new OnboardingNotification("1@example.com"), "users:created");
+
+$repository->initialize(__DIR__ . "/users.csv");
+
+$user = $repository->createUser([
+    "name" => "John Smith",
+    "email" => "john99@example.com",
+]);
+
+$repository->deleteUser($user);

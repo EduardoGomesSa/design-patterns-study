@@ -1,0 +1,3 @@
+2025-04-21 17:34:47: 'Users:init' with data '"\/home\/eduardo\/Projetos\/php\/design-patterns-study\/BehavioralPatterns\/ObserverMethod\/users.csv"'
+2025-04-21 17:34:47: 'users:created' with data '{"attributes":{"name":"John Smith","email":"john99@example.com","id":"c141654d73e7929bfec9255496024fe2"}}'
+2025-04-21 17:34:47: 'users:deleted' with data '{"attributes":{"name":"John Smith","email":"john99@example.com","id":"c141654d73e7929bfec9255496024fe2"}}'
