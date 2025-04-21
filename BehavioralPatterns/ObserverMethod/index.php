@@ -3,6 +3,7 @@
 namespace RefactoringGuru\Observer\RealWorld;
 
 use SplObserver;
+use SplSubject;
 
 class UserRepository implements \SplSubject
 {
@@ -112,5 +113,25 @@ class user {
 
     public function update($data) : void {
         $this->attributes = array_merge($this->attributes, $data);
+    }
+}
+
+class Logger implements \SplObserver {
+    private $filename;
+
+    public function __construct($filename) {
+        $this->filename = $filename;
+
+        if(file_exists($this->filename)) {
+            unlink($this->filename);
+        }
+    }
+
+    public function update(\SplSubject $subject, ?string $event = null, $data): void
+    {
+        $entry = date("Y-m-d H:i:s") . ": '$event' with data '" . json_encode($data) . "'\n";
+        file_put_contents($this->filename, $entry, FILE_APPEND);
+
+        echo "Logger: I've written '$event' entry to the log.\n";
     }
 }
