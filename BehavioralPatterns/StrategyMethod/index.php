@@ -95,3 +95,16 @@ class Order {
         echo "Order: #{$this->id} is now {$this->status}.";
     }
 }
+
+class PaymentFactory {
+    public static function getPaymentMethod(string $id) : PaymentMethod {
+        switch ($id) {
+            case "cc":
+                return new CreditCardPayment();
+            case "paypal":
+                return new payPalPayment();
+            default:
+                throw new \Exception("Unknown Payment Method");
+        }
+    } 
+}
