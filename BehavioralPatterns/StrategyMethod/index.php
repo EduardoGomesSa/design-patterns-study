@@ -2,8 +2,22 @@
 
 namespace RefactoringGuru\Strategy\RealWorld;
 
+/**
+ * This is the router and controller of our application. Upon receiving a
+ * request, this class decides what behavior should be executed. When the app
+ * receives a payment request, the OrderController class also decides which
+ * payment method it should use to process the request. Thus, the class acts as
+ * the Context and the Client at the same time.
+ */
 class OrderController
 {
+    /**
+     * Handle POST requests.
+     *
+     * @param $url
+     * @param $data
+     * @throws \Exception
+     */
     public function post(string $url, array $data)
     {
         echo "Controller: POST request to $url with " . json_encode($data) . "\n";
@@ -17,6 +31,12 @@ class OrderController
         }
     }
 
+    /**
+     * Handle GET requests.
+     *
+     * @param $url
+     * @throws \Exception
+     */
     public function get(string $url): void
     {
         echo "Controller: GET request to $url\n";
@@ -30,6 +50,8 @@ class OrderController
         } elseif (preg_match('#^/order/([0-9]+?)/payment/([a-z]+?)(/return)?$#', $path, $matches)) {
             $order = Order::get($matches[1]);
 
+            // The payment method (strategy) is selected according to the value
+            // passed along with the request.
             $paymentMethod = PaymentFactory::getPaymentMethod($matches[2]);
 
             if (!isset($matches[3])) {
@@ -42,13 +64,18 @@ class OrderController
         }
     }
 
+    /**
+     * POST /order {data}
+     */
     public function postNewOrder(array $data): void
     {
         $order = new Order($data);
-
         echo "Controller: Created the order #{$order->id}.\n";
     }
 
+    /**
+     * GET /orders
+     */
     public function getAllOrders(): void
     {
         echo "Controller: Here's all orders:\n";
@@ -57,16 +84,24 @@ class OrderController
         }
     }
 
+    /**
+     * GET /order/123/payment/XX
+     */
     public function getPayment(PaymentMethod $method, Order $order, array $data): void
     {
+        // The actual work is delegated to the payment method object.
         $form = $method->getPaymentForm($order);
         echo "Controller: here's the payment form:\n";
         echo $form . "\n";
     }
 
+    /**
+     * GET /order/123/payment/XXX/return?key=AJHKSJHJ3423&success=true
+     */
     public function getPaymentReturn(PaymentMethod $method, Order $order, array $data): void
     {
         try {
+            // Another type of work delegated to the payment method.
             if ($method->validateReturn($order, $data)) {
                 echo "Controller: Thanks for your order!\n";
                 $order->complete();
@@ -77,11 +112,25 @@ class OrderController
     }
 }
 
+/**
+ * A simplified representation of the Order class.
+ */
 class Order
 {
+    /**
+     * For the sake of simplicity, we'll store all created orders here...
+     *
+     * @var array
+     */
     private static $orders = [];
 
-    public static function get(?int $orderId = null)
+    /**
+     * ...and access them from here.
+     *
+     * @param int $orderId
+     * @return mixed
+     */
+    public static function get(int $orderId = null)
     {
         if ($orderId === null) {
             return static::$orders;
@@ -90,6 +139,12 @@ class Order
         }
     }
 
+    /**
+     * The Order constructor assigns the values of the order's fields. To keep
+     * things simple, there is no validation whatsoever.
+     *
+     * @param array $attributes
+     */
     public function __construct(array $attributes)
     {
         $this->id = count(static::$orders);
@@ -100,34 +155,60 @@ class Order
         static::$orders[$this->id] = $this;
     }
 
+    /**
+     * The method to call when an order gets paid.
+     */
     public function complete(): void
     {
-        $this->status - " completed";
+        $this->status = "completed";
         echo "Order: #{$this->id} is now {$this->status}.";
     }
 }
 
+/**
+ * This class helps to produce a proper strategy object for handling a payment.
+ */
 class PaymentFactory
 {
+    /**
+     * Get a payment method by its ID.
+     *
+     * @param $id
+     * @return PaymentMethod
+     * @throws \Exception
+     */
     public static function getPaymentMethod(string $id): PaymentMethod
     {
         switch ($id) {
             case "cc":
                 return new CreditCardPayment();
             case "paypal":
-                return new payPalPayment();
+                return new PayPalPayment();
             default:
                 throw new \Exception("Unknown Payment Method");
         }
     }
 }
 
+/**
+ * The Strategy interface describes how a client can use various Concrete
+ * Strategies.
+ *
+ * Note that in most examples you can find on the Web, strategies tend to do
+ * some tiny thing within one method. However, in reality, your strategies can
+ * be much more robust (by having several methods, for example).
+ */
 interface PaymentMethod
 {
     public function getPaymentForm(Order $order): string;
+
     public function validateReturn(Order $order, array $data): bool;
 }
 
+/**
+ * This Concrete Strategy provides a payment form and validates returns for
+ * credit card payments.
+ */
 class CreditCardPayment implements PaymentMethod
 {
     static private $store_secret_key = "swordfish";
@@ -138,17 +219,17 @@ class CreditCardPayment implements PaymentMethod
             "order/{$order->id}/payment/cc/return";
 
         return <<<FORM
-            <form action="https://my-credit-card-processor.com/charge" method="POST">
-                <input type="hidden" id="email" value="{$order->email}">
-                <input type="hidden" id="total" value="{$order->total}">
-                <input type="hidden" id="returnURL" value="$returnURL">
-                <input type="text" id="cardholder-name">
-                <input type="text" id="credit-card">
-                <input type="text" id="expiration-date">
-                <input type="text" id="ccv-number">
-                <input type="submit" value="Pay">
-            </form>
-            FORM;
+<form action="https://my-credit-card-processor.com/charge" method="POST">
+    <input type="hidden" id="email" value="{$order->email}">
+    <input type="hidden" id="total" value="{$order->total}">
+    <input type="hidden" id="returnURL" value="$returnURL">
+    <input type="text" id="cardholder-name">
+    <input type="text" id="credit-card">
+    <input type="text" id="expiration-date">
+    <input type="text" id="ccv-number">
+    <input type="submit" value="Pay">
+</form>
+FORM;
     }
 
     public function validateReturn(Order $order, array $data): bool
@@ -175,6 +256,10 @@ class CreditCardPayment implements PaymentMethod
     }
 }
 
+/**
+ * This Concrete Strategy provides a payment form and validates returns for
+ * PayPal payments.
+ */
 class PayPalPayment implements PaymentMethod
 {
     public function getPaymentForm(Order $order): string
@@ -183,13 +268,13 @@ class PayPalPayment implements PaymentMethod
             "order/{$order->id}/payment/paypal/return";
 
         return <<<FORM
-            <form action="https://paypal.com/payment" method="POST">
-            <input type="hidden" id="email" value="{$order->email}">
-            <input type="hidden" id="total" value="{$order->total}">
-            <input type="hidden" id="returnURL" value="$returnURL">
-            <input type="submit" value="Pay on PayPal">
-            </form>
-            FORM;
+<form action="https://paypal.com/payment" method="POST">
+    <input type="hidden" id="email" value="{$order->email}">
+    <input type="hidden" id="total" value="{$order->total}">
+    <input type="hidden" id="returnURL" value="$returnURL">
+    <input type="submit" value="Pay on PayPal">
+</form>
+FORM;
     }
 
     public function validateReturn(Order $order, array $data): bool
@@ -204,6 +289,10 @@ class PayPalPayment implements PaymentMethod
     }
 }
 
+/**
+ * The client code.
+ */
+
 $controller = new OrderController();
 
 echo "Client: Let's create some orders\n";
@@ -212,6 +301,12 @@ $controller->post("/orders", [
     "email" => "me@example.com",
     "product" => "ABC Cat food (XL)",
     "total" => 9.95,
+]);
+
+$controller->post("/orders", [
+    "email" => "me@example.com",
+    "product" => "XYZ Cat litter (XXL)",
+    "total" => 19.95,
 ]);
 
 echo "\nClient: List my orders, please\n";
