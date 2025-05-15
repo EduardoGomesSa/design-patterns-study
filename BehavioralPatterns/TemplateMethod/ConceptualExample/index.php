@@ -60,3 +60,14 @@ class ConcreteClass2 extends AbstractClass {
         echo "ConcreteClass2 says: Overridden Hook1\n";
     }
 }
+
+function clientCode(AbstractClass $class) {
+    $class->templateMethod();
+}
+
+echo "Same client code can work with different subclasses:\n";
+clientCode(new ConcreteClass1());
+echo "\n";
+
+echo "Same client code can work with different subclasses:\n";
+clientCode(new ConcreteClass2());
