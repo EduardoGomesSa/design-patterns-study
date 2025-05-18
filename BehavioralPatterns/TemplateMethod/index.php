@@ -27,3 +27,88 @@ abstract class SocialNetwork {
     abstract public function sendData(string $message) : bool;
     abstract public function logOut() : void;
 }
+
+class Facebook extends SocialNetwork {
+    public function logIn(string $username, string $password): bool
+    {
+        echo "\nChecking user's credentials...\n";
+        echo "Name: " . $this->username . "\n";
+        echo "Password: " . str_repeat("*", strlen($this->password)) . "\n";
+
+        simulateNetworkLatency();
+
+        echo "\n\nFacebook: '" . $this->username . "' has logged in successfull.\n";
+
+        return true;
+    }
+
+    public function sendData(string $message): bool
+    {
+        echo "Facebook: '" . $this->username . "' has posted '" . $message . "'.\n";
+
+        return true;
+    }
+
+    public function logOut(): void
+    {
+        echo "Facebook: '" . $this->username . "' has been logged out.\n";
+    }
+}
+
+class Twitter extends SocialNetwork {
+    public function logIn(string $username, string $password): bool
+    {
+        echo "\nChecking user's credentials...\n";
+        echo "Name: " . $this->username . "\n";
+        echo "Password: " . str_repeat("*", strlen($this->password)) . "\n";
+
+        simulateNetworkLatency();
+
+        echo "\n\nTwitter: '" . $this->username . "' has logged in successfully.\n";
+
+        return true;
+    }
+
+    public function sendData(string $message): bool
+    {
+        echo "Twitter: '" . $this->username . "' has posted '" . $message ."'.\n";
+
+        return true;
+    }
+
+    public function logOut(): void
+    {
+        echo "Twitter: '" . $this->username . "' has been logged out.\n";
+    }
+}
+
+function simulateNetworkLatency() {
+    $i = 0;
+    while ($i < 5) {
+        echo ".";
+        sleep(1);
+        $i++;
+    }
+}
+
+echo "Username: \n";
+$username = readline();
+echo "Password: \n";
+$password = readline();
+echo "Message: \n";
+$message = readline();
+
+echo "\nChoose the social network to post the message:\n" . 
+"1 - Facebook\n" . 
+"2 - Twitter\n";
+$choice = readline();
+
+if($choice == 1) {
+    $network = new Facebook($username, $password);
+} elseif ($choice == 2) {
+    $network = new Twitter($username, $password);
+} else {
+    die("Sorry, I'm not sure what you mean by that.\n");
+}
+
+$network->post($message);
