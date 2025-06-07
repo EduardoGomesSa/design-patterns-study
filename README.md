@@ -1,5 +1,6 @@
 # design-patterns-study
 <p>Repositório para estudo de padrões de projetos, nos exemplos, utilizarei a linguagem PHP. Inicialmente, estou me guiando pelo conteúdo do site refactoring.guru, onde aprensentam os padrões de forma consistente e exemplificam</p>
+<p>Para os códigos de exemplo, utilizei a linguagem PHP, por conciliar com meus estudos atuais.</p>
 
 ## Sobre os Design Patterns
 <p>
